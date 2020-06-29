@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>聊天室</title>
+    <!--bootstrap-->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+        integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+        integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+        integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+        integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+        crossorigin="anonymous"></script>
+    <!--Mustache Templating engine-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/4.0.1/mustache.min.js"></script>
+    <!--Socket.io-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+    <!--Custom CSS-->
+    <style type="text/css">
+        html,
+        body {
+            height: 100%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-fluid min-vh-100 d-flex flex-column">
+        <input type="hidden" name="sender" id="sender" value="<%= user.fullname %>">
+        <div class="row">
+            <div class="col d-flex flex-column vh-100" style="max-height: 100vh">
+                <div class="row">
+                    <div class="col">
+                        <h1>歡迎, <%= user.fullname %></h1>
+                    </div>
+                    <div class="col d-flex justify-content-end">
+                        <a href="/logout" class="btn btn-danger">登出</a>
+                    </div>
+                </div>
+                <div class="row flex-grow-1 overflow-auto">
+                    <div class="col" style="list-style: none;" id="messages">
+
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col">
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" placeholder="輸入要傳送的訊息..." id="msg-input">
+                            <div class="input-group-append">
+                                <button class="btn btn-primary" type="button" id="sendmsg-button">傳送</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <script id="message-template" type="text/template">
+        <li>
+            {{ sender }}:
+            <br>
+            {{ text }}
+        </li>
+    </script>
+
+        <script>
+            $(document).ready(function () {
+                var socket = io();
+                var messagebox = document.getElementById("msg-input");
+                var sender = document.getElementById("sender");
+                socket.on('connect', function () {
+                    console.log('Successfully connected to chat.');
+                });
+                socket.on('newMessage', function (data) {
+                    var template = $('#message-template').html();
+                    var message = Mustache.render(template, { text: data.text, sender: data.from });
+                    $("#messages").append(message);
+                });
+                $('#sendmsg-button').click(function () {
+                    socket.emit('newMessage', { text: messagebox.value, from: sender.value });
+                    messagebox.value = '';
+                });
+            });
+        </script>
+</body>
+
+</html>
